@@ -100,7 +100,7 @@ function App() {
                 }
               />
               <Route
-                path="/mentor/courses/:id/edit"
+                path="/mentor/courses/:courseId/edit"
                 element={
                   <PrivateRoute allowedRoles={["mentor"]}>
                     <CourseForm />

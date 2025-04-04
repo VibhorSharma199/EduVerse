@@ -112,7 +112,7 @@ const MentorDashboard = () => {
           </Typography>
           <Button
             component={Link}
-            to="/mentor/courses/create"
+            to="/mentor/courses/new"
             variant="contained"
             color="primary"
           >
@@ -127,7 +127,7 @@ const MentorDashboard = () => {
             </Typography>
             <Button
               component={Link}
-              to="/mentor/courses/create"
+              to="/mentor/courses/new"
               variant="contained"
               color="primary"
               sx={{ mt: 2 }}
