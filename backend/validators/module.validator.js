@@ -68,12 +68,12 @@ export const validateLecture = [
     .isLength({ min: 10, max: 500 })
     .withMessage("Description must be between 10 and 500 characters"),
 
-  body("videoUrl")
+  body("youtubeUrl")
     .trim()
     .notEmpty()
-    .withMessage("Video URL is required")
+    .withMessage("YouTube URL is required")
     .isURL()
-    .withMessage("Video URL must be a valid URL"),
+    .withMessage("YouTube URL must be a valid URL"),
 
   body("duration")
     .notEmpty()

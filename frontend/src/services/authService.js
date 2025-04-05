@@ -46,7 +46,27 @@ class AuthService {
       }
       const response = await api.get("/auth/me");
       if (response.data.status === "success") {
-        return response.data.data;
+        const userData = response.data.data;
+
+        // Include badges and achievements in the user data
+        if (userData.badges) {
+          userData.badges = userData.badges.map((badge) => ({
+            _id: badge._id,
+            name: badge.name,
+            description: badge.description,
+            icon: badge.icon,
+          }));
+        }
+        if (userData.achievements) {
+          userData.achievements = userData.achievements.map((achievement) => ({
+            _id: achievement._id,
+            name: achievement.name,
+            description: achievement.description,
+            icon: achievement.icon,
+          }));
+        }
+
+        return userData;
       }
       throw new Error(response.data.message || "Failed to get user data");
     } catch (error) {
@@ -109,36 +129,9 @@ class AuthService {
 
   handleError(error) {
     console.error("Auth service error:", error);
-
     if (error.response) {
-      // Handle specific error status codes
-      switch (error.response.status) {
-        case 400:
-          return new Error(error.response.data.message || "Invalid request");
-        case 401:
-          this.removeToken();
-          return new Error("Session expired. Please log in again.");
-        case 403:
-          return new Error("You don't have permission to perform this action");
-        case 404:
-          return new Error("Resource not found");
-        case 429:
-          return new Error("Too many requests. Please try again later.");
-        case 500:
-          return new Error("Internal server error. Please try again later.");
-        default:
-          return new Error(
-            error.response.data.message || "Authentication failed"
-          );
-      }
+      return new Error(error.response.data.message || "Authentication failed");
     }
-
-    if (error.request) {
-      return new Error(
-        "No response received from server. Please check your internet connection."
-      );
-    }
-
     return new Error(error.message || "An unexpected error occurred");
   }
 }

@@ -102,6 +102,16 @@ class CourseService {
     }
   }
 
+  async getMentorCourses() {
+    try {
+      const response = await api.get("/courses/mentor");
+      return response.data;
+    } catch (error) {
+      console.error("Error fetching mentor courses:", error);
+      throw this.handleError(error);
+    }
+  }
+
   async rateCourse(id, rating, review) {
     try {
       const response = await api.post(`/courses/${id}/rate`, {

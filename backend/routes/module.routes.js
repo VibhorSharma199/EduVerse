@@ -23,7 +23,7 @@ router
 
 router
   .route("/:id")
-  .get(getModule)
+  .get(protect, getModule)
   .patch(protect, authorize("mentor", "admin"), validateModule, updateModule)
   .delete(protect, authorize("mentor", "admin"), deleteModule);
 

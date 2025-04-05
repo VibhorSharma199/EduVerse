@@ -41,11 +41,35 @@ const moduleSchema = new mongoose.Schema(
           type: Number,
           required: true,
         },
+        completed: {
+          type: Boolean,
+          default: false,
+        },
+        progress: {
+          type: Number,
+          default: 0,
+          min: 0,
+          max: 100,
+        },
       },
     ],
     quiz: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Quiz",
+      questions: [
+        {
+          question: {
+            type: String,
+            required: true,
+          },
+          options: {
+            type: [String],
+            required: true,
+          },
+          correctAnswer: {
+            type: String,
+            required: true,
+          },
+        },
+      ],
     },
     isPublished: {
       type: Boolean,

@@ -99,6 +99,42 @@ class MentorService {
     }
   }
 
+  async createModule(moduleData) {
+    try {
+      const response = await api.post("/modules", moduleData);
+      return response.data;
+    } catch (error) {
+      throw this.handleError(error);
+    }
+  }
+
+  async updateModule(moduleId, moduleData) {
+    try {
+      const response = await api.patch(`/modules/${moduleId}`, moduleData);
+      return response.data;
+    } catch (error) {
+      throw this.handleError(error);
+    }
+  }
+
+  async deleteModule(moduleId) {
+    try {
+      const response = await api.delete(`/modules/${moduleId}`);
+      return response.data;
+    } catch (error) {
+      throw this.handleError(error);
+    }
+  }
+
+  async getModule(moduleId) {
+    try {
+      const response = await api.get(`/modules/${moduleId}`);
+      return response.data;
+    } catch (error) {
+      throw this.handleError(error);
+    }
+  }
+
   handleError(error) {
     if (error.response) {
       const message = error.response.data.message || "An error occurred";

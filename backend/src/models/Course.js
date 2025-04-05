@@ -40,7 +40,7 @@ const courseSchema = new mongoose.Schema(
         title: String,
         content: String,
         duration: Number,
-        videoUrl: String,
+        youtubeUrl: String,
       },
     ],
     enrolledStudents: [

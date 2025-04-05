@@ -14,7 +14,7 @@ import {
   Alert,
   CircularProgress,
 } from "@mui/material";
-import api from "../services/api";
+import mentorService from "../services/mentorService";
 
 const CourseForm = () => {
   const { courseId } = useParams();
@@ -40,9 +40,9 @@ const CourseForm = () => {
   const fetchCourse = async () => {
     try {
       setLoading(true);
-      const response = await api.get(`/courses/${courseId}`);
-      if (response.data.status === "success") {
-        const course = response.data.data;
+      const response = await mentorService.getCourseById(courseId);
+      if (response.status === "success") {
+        const course = response.data;
         setFormData({
           title: course.title,
           description: course.description,
@@ -76,16 +76,14 @@ const CourseForm = () => {
       setError(null);
 
       if (courseId) {
-        // Update existing course
-        await api.patch(`/courses/${courseId}`, formData);
+        await mentorService.updateCourse(courseId, formData);
       } else {
-        // Create new course
-        await api.post("/courses", formData);
+        await mentorService.createCourse(formData);
       }
 
       navigate("/mentor/dashboard");
     } catch (error) {
-      setError(error.response?.data?.message || "Failed to save course");
+      setError(error.message || "Failed to save course");
       console.error("Error saving course:", error);
     } finally {
       setLoading(false);

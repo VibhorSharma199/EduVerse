@@ -16,7 +16,7 @@ export default function CourseManagement() {
   const [newLecture, setNewLecture] = useState({
     title: "",
     description: "",
-    videoUrl: "",
+    youtubeUrl: "",
     duration: 0,
     order: 0,
   });
@@ -53,7 +53,7 @@ export default function CourseManagement() {
       setNewLecture({
         title: "",
         description: "",
-        videoUrl: "",
+        youtubeUrl: "",
         duration: 0,
         order: 0,
       });
@@ -151,9 +151,9 @@ export default function CourseManagement() {
               </label>
               <Input
                 type="url"
-                value={newLecture.videoUrl}
+                value={newLecture.youtubeUrl}
                 onChange={(e) =>
-                  setNewLecture({ ...newLecture, videoUrl: e.target.value })
+                  setNewLecture({ ...newLecture, youtubeUrl: e.target.value })
                 }
                 required
               />

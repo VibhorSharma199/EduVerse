@@ -1,81 +1,77 @@
-import axios from "axios";
+import api from "./api";
 
-const API_URL = "http://localhost:5000/api";
+class ModuleService {
+  async getModule(courseId, moduleId) {
+    try {
+      const response = await api.get(`/modules/${moduleId}`);
+      return response.data.data; // The backend returns data in a data property
+    } catch (error) {
+      throw this.handleError(error);
+    }
+  }
 
-const getAuthHeader = () => {
-  const token = localStorage.getItem("token");
-  return { Authorization: `Bearer ${token}` };
-};
+  async getLecture(courseId, moduleId, lectureId) {
+    try {
+      // First get the module data
+      const moduleData = await this.getModule(courseId, moduleId);
 
-const moduleService = {
-  getModule: async (id) => {
-    const response = await axios.get(`${API_URL}/modules/${id}`);
-    return response.data;
-  },
+      // Find the lecture in the module
+      const lecture = moduleData.lectures?.find((l) => l._id === lectureId);
 
-  createModule: async (moduleData) => {
-    const response = await axios.post(`${API_URL}/modules`, moduleData, {
-      headers: getAuthHeader(),
-    });
-    return response.data;
-  },
-
-  updateModule: async (id, moduleData) => {
-    const response = await axios.patch(`${API_URL}/modules/${id}`, moduleData, {
-      headers: getAuthHeader(),
-    });
-    return response.data;
-  },
-
-  deleteModule: async (id) => {
-    const response = await axios.delete(`${API_URL}/modules/${id}`, {
-      headers: getAuthHeader(),
-    });
-    return response.data;
-  },
-
-  addLecture: async (moduleId, lectureData) => {
-    const response = await axios.post(
-      `${API_URL}/modules/${moduleId}/lectures`,
-      lectureData,
-      {
-        headers: getAuthHeader(),
+      if (!lecture) {
+        throw new Error("Lecture not found");
       }
-    );
-    return response.data;
-  },
 
-  updateLecture: async (moduleId, lectureId, lectureData) => {
-    const response = await axios.patch(
-      `${API_URL}/modules/${moduleId}/lectures/${lectureId}`,
-      lectureData,
-      {
-        headers: getAuthHeader(),
+      return lecture;
+    } catch (error) {
+      throw this.handleError(error);
+    }
+  }
+
+  async completeLecture(courseId, moduleId, lectureId) {
+    try {
+      // Use the module progress endpoint
+      const response = await api.post(`/modules/${moduleId}/progress`, {
+        completedLectures: 1, // Mark one lecture as completed
+        lectureId: lectureId,
+      });
+      return response.data;
+    } catch (error) {
+      throw this.handleError(error);
+    }
+  }
+
+  async completeModule(courseId, moduleId) {
+    try {
+      // First get the module to know its lectures
+      const moduleData = await this.getModule(courseId, moduleId);
+
+      // Mark each lecture as completed
+      for (const lecture of moduleData.lectures) {
+        if (!lecture.completed && lecture.progress !== 100) {
+          await this.completeLecture(courseId, moduleId, lecture._id);
+        }
       }
-    );
-    return response.data;
-  },
 
-  deleteLecture: async (moduleId, lectureId) => {
-    const response = await axios.delete(
-      `${API_URL}/modules/${moduleId}/lectures/${lectureId}`,
-      {
-        headers: getAuthHeader(),
-      }
-    );
-    return response.data;
-  },
+      return moduleData;
+    } catch (error) {
+      throw this.handleError(error);
+    }
+  }
 
-  updateProgress: async (moduleId, progressData) => {
-    const response = await axios.post(
-      `${API_URL}/modules/${moduleId}/progress`,
-      progressData,
-      {
-        headers: getAuthHeader(),
-      }
-    );
-    return response.data;
-  },
-};
+  handleError(error) {
+    if (error.response) {
+      // The request was made and the server responded with a status code
+      // that falls out of the range of 2xx
+      throw new Error(error.response.data.message || "An error occurred");
+    } else if (error.request) {
+      // The request was made but no response was received
+      throw new Error("No response from server");
+    } else {
+      // Something happened in setting up the request that triggered an Error
+      throw new Error(error.message || "An error occurred");
+    }
+  }
+}
 
-export default moduleService;
+export default new ModuleService();

@@ -1,11 +1,16 @@
-import api from "./api";
+import axios from "axios";
+import { API_URL } from "../config";
 
 class GamificationService {
   // Get all badges
   async getBadges() {
     try {
-      const response = await api.get("/gamification/badges");
-      return response.data.data;
+      const response = await axios.get(`${API_URL}/gamification/badges`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
+      return response.data;
     } catch (error) {
       throw this.handleError(error);
     }
@@ -14,8 +19,43 @@ class GamificationService {
   // Get all achievements
   async getAchievements() {
     try {
-      const response = await api.get("/gamification/achievements");
-      return response.data.data;
+      const response = await axios.get(`${API_URL}/gamification/achievements`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
+      return response.data;
+    } catch (error) {
+      throw this.handleError(error);
+    }
+  }
+
+  // Get leaderboard
+  async getLeaderboard(period = "all", limit = 10) {
+    try {
+      const response = await axios.get(
+        `${API_URL}/gamification/leaderboard?period=${period}&limit=${limit}`,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
+      );
+      return response.data;
+    } catch (error) {
+      throw this.handleError(error);
+    }
+  }
+
+  // Get user progress
+  async getUserProgress() {
+    try {
+      const response = await axios.get(`${API_URL}/gamification/progress`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
+      return response.data;
     } catch (error) {
       throw this.handleError(error);
     }
@@ -24,10 +64,16 @@ class GamificationService {
   // Check course completion and award badges
   async checkCourseCompletion(courseId) {
     try {
-      const response = await api.get(
-        `/gamification/badges/check-course/${courseId}`
+      const response = await axios.post(
+        `${API_URL}/gamification/check-completion`,
+        { courseId },
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
       );
-      return response.data.data;
+      return response.data;
     } catch (error) {
       throw this.handleError(error);
     }
@@ -36,10 +82,64 @@ class GamificationService {
   // Mark course as completed and check for badges/achievements
   async markCourseCompleted(courseId) {
     try {
-      const response = await api.post(
+      const response = await axios.post(
         `/gamification/courses/${courseId}/complete`
       );
       return response.data.data;
+    } catch (error) {
+      throw this.handleError(error);
+    }
+  }
+
+  // Award points
+  async awardPoints(points, reason) {
+    try {
+      const response = await axios.post(
+        `${API_URL}/gamification/award-points`,
+        { points, reason },
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
+      );
+      return response.data;
+    } catch (error) {
+      throw this.handleError(error);
+    }
+  }
+
+  // Unlock a badge
+  async unlockBadge(badgeId) {
+    try {
+      const response = await axios.post(
+        `${API_URL}/gamification/unlock-badge`,
+        { badgeId },
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
+      );
+      return response.data;
+    } catch (error) {
+      throw this.handleError(error);
+    }
+  }
+
+  // Unlock an achievement
+  async unlockAchievement(achievementId) {
+    try {
+      const response = await axios.post(
+        `${API_URL}/gamification/unlock-achievement`,
+        { achievementId },
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
+      );
+      return response.data;
     } catch (error) {
       throw this.handleError(error);
     }

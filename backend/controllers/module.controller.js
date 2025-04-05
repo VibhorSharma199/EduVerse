@@ -48,14 +48,29 @@ export const createModule = async (req, res, next) => {
 // @access  Private
 export const getModule = async (req, res, next) => {
   try {
-    const module = await Module.findById(req.params.id)
-      .populate("course", "title description")
-      .populate("lectures.quiz", "title questions");
+    const module = await Module.findById(req.params.id).populate(
+      "course",
+      "title description mentor enrolledStudents"
+    );
 
     if (!module) {
       return res.status(404).json({
         status: "error",
         message: "Module not found",
+      });
+    }
+
+    // Check if user is enrolled in the course or is the mentor
+    const course = module.course;
+    const isEnrolled = course.enrolledStudents.some(
+      (studentId) => studentId.toString() === req.user.id
+    );
+    const isMentor = course.mentor.toString() === req.user.id;
+
+    if (!isEnrolled && !isMentor && req.user.role !== "admin") {
+      return res.status(403).json({
+        status: "error",
+        message: "Not authorized to access this module",
       });
     }
 
@@ -271,7 +286,7 @@ export const deleteLecture = async (req, res, next) => {
 // @access  Private
 export const updateProgress = async (req, res, next) => {
   try {
-    const { completedLectures } = req.body;
+    const { completedLectures, lectureId } = req.body;
     const module = await Module.findById(req.params.id);
 
     if (!module) {
@@ -279,6 +294,18 @@ export const updateProgress = async (req, res, next) => {
         status: "error",
         message: "Module not found",
       });
+    }
+
+    // If lectureId is provided, mark that specific lecture as completed
+    if (lectureId) {
+      const lecture = module.lectures.find(
+        (l) => l._id.toString() === lectureId
+      );
+      if (lecture) {
+        lecture.completed = true;
+        lecture.progress = 100;
+        await module.save();
+      }
     }
 
     const user = req.user;

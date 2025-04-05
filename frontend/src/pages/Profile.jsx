@@ -13,9 +13,11 @@ import {
   DialogContent,
   DialogActions,
   CircularProgress,
+  Chip,
+  Divider,
 } from "@mui/material";
 import { useAuth } from "../contexts/AuthContext";
-import BadgesAndAchievements from "../components/BadgesAndAchievements";
+import { EmojiEvents, Star, School, TrendingUp } from "@mui/icons-material";
 
 const Profile = () => {
   const { user, loading, updateProfile, changePassword } = useAuth();
@@ -103,56 +105,44 @@ const Profile = () => {
 
   if (loading) {
     return (
-      <Box sx={{ display: "flex", justifyContent: "center", p: 3 }}>
+      <Box
+        display="flex"
+        justifyContent="center"
+        alignItems="center"
+        minHeight="80vh"
+      >
         <CircularProgress />
       </Box>
     );
   }
 
-  if (!user) {
-    return (
-      <Container>
-        <Typography variant="h6" color="error">
-          Please log in to view your profile
-        </Typography>
-      </Container>
-    );
-  }
-
   return (
-    <Container>
-      <Box sx={{ py: 4 }}>
-        <Paper sx={{ p: 3, mb: 3 }}>
-          <Grid container spacing={3}>
-            <Grid item xs={12} md={4} sx={{ textAlign: "center" }}>
-              <Avatar
-                sx={{
-                  width: 120,
-                  height: 120,
-                  mx: "auto",
-                  mb: 2,
-                  bgcolor: "primary.main",
-                }}
-              >
-                {user.name?.[0]?.toUpperCase() || "U"}
-              </Avatar>
-              <Typography variant="h5" gutterBottom>
-                {user.name}
-              </Typography>
-              <Typography color="text.secondary" gutterBottom>
-                {user.role === "mentor" ? "Mentor" : "Student"}
-              </Typography>
-              <Button
-                variant="outlined"
-                onClick={() => setPasswordDialog(true)}
-                sx={{ mt: 2 }}
-              >
-                Change Password
-              </Button>
+    <Container maxWidth="lg">
+      <Box sx={{ my: 4 }}>
+        <Typography variant="h4" component="h1" gutterBottom>
+          Profile
+        </Typography>
+
+        <Paper sx={{ p: 4, mb: 4 }}>
+          <Grid container spacing={4}>
+            <Grid item xs={12} md={4}>
+              <Box display="flex" flexDirection="column" alignItems="center">
+                <Avatar
+                  src={user?.profilePicture}
+                  alt={user?.name}
+                  sx={{ width: 120, height: 120, mb: 2 }}
+                />
+                <Typography variant="h6">{user?.name}</Typography>
+                <Typography color="textSecondary">{user?.email}</Typography>
+                <Typography color="textSecondary" sx={{ mt: 1 }}>
+                  {user?.role === "student" ? "Student" : "Mentor"}
+                </Typography>
+              </Box>
             </Grid>
+
             <Grid item xs={12} md={8}>
               <form onSubmit={handleSubmit}>
-                <Grid container spacing={2}>
+                <Grid container spacing={3}>
                   <Grid item xs={12}>
                     <TextField
                       fullWidth
@@ -180,9 +170,9 @@ const Profile = () => {
                       name="bio"
                       value={formData.bio}
                       onChange={handleInputChange}
-                      disabled={!editMode}
                       multiline
                       rows={4}
+                      disabled={!editMode}
                     />
                   </Grid>
                   <Grid item xs={12}>
@@ -228,57 +218,130 @@ const Profile = () => {
           </Typography>
         )}
 
-        <BadgesAndAchievements />
-      </Box>
+        {/* Skills Section - Displaying Badges and Achievements */}
+        <Paper sx={{ p: 4, mb: 4 }}>
+          <Typography variant="h5" gutterBottom>
+            Skills & Achievements
+          </Typography>
 
-      <Dialog open={passwordDialog} onClose={() => setPasswordDialog(false)}>
-        <DialogTitle>Change Password</DialogTitle>
-        <DialogContent>
-          <form onSubmit={handlePasswordSubmit}>
-            <Grid container spacing={2} sx={{ mt: 1 }}>
-              <Grid item xs={12}>
-                <TextField
-                  fullWidth
-                  label="Current Password"
-                  name="currentPassword"
-                  type="password"
-                  value={passwordData.currentPassword}
-                  onChange={handlePasswordChange}
-                  required
-                />
-              </Grid>
-              <Grid item xs={12}>
-                <TextField
-                  fullWidth
-                  label="New Password"
-                  name="newPassword"
-                  type="password"
-                  value={passwordData.newPassword}
-                  onChange={handlePasswordChange}
-                  required
-                />
-              </Grid>
-              <Grid item xs={12}>
-                <TextField
-                  fullWidth
-                  label="Confirm New Password"
-                  name="confirmPassword"
-                  type="password"
-                  value={passwordData.confirmPassword}
-                  onChange={handlePasswordChange}
-                  required
-                />
-              </Grid>
-            </Grid>
-          </form>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setPasswordDialog(false)}>Cancel</Button>
-          <Button onClick={handlePasswordSubmit} variant="contained">
-            Change Password
-          </Button>
-        </DialogActions>
-      </Dialog>
+          {/* Badges Section */}
+          <Box sx={{ mb: 4 }}>
+            <Typography
+              variant="h6"
+              gutterBottom
+              sx={{ display: "flex", alignItems: "center" }}
+            >
+              <EmojiEvents sx={{ mr: 1, color: "gold" }} />
+              Badges
+            </Typography>
+            <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
+              {user?.badges?.length > 0 ? (
+                user.badges.map((badge) => (
+                  <Chip
+                    key={badge._id}
+                    icon={<EmojiEvents />}
+                    label={badge.name}
+                    color="primary"
+                    variant="outlined"
+                  />
+                ))
+              ) : (
+                <Typography color="textSecondary">
+                  No badges earned yet
+                </Typography>
+              )}
+            </Box>
+          </Box>
+
+          <Divider sx={{ my: 3 }} />
+
+          {/* Achievements Section */}
+          <Box>
+            <Typography
+              variant="h6"
+              gutterBottom
+              sx={{ display: "flex", alignItems: "center" }}
+            >
+              <Star sx={{ mr: 1, color: "orange" }} />
+              Achievements
+            </Typography>
+            <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
+              {user?.achievements?.length > 0 ? (
+                user.achievements.map((achievement) => (
+                  <Chip
+                    key={achievement._id}
+                    icon={<Star />}
+                    label={achievement.name}
+                    color="secondary"
+                    variant="outlined"
+                  />
+                ))
+              ) : (
+                <Typography color="textSecondary">
+                  No achievements earned yet
+                </Typography>
+              )}
+            </Box>
+          </Box>
+        </Paper>
+
+        {/* Password Change Dialog */}
+        <Dialog open={passwordDialog} onClose={() => setPasswordDialog(false)}>
+          <DialogTitle>Change Password</DialogTitle>
+          <DialogContent>
+            <Box
+              component="form"
+              onSubmit={handlePasswordSubmit}
+              sx={{ pt: 2 }}
+            >
+              <TextField
+                fullWidth
+                label="Current Password"
+                name="currentPassword"
+                type="password"
+                value={passwordData.currentPassword}
+                onChange={handlePasswordChange}
+                margin="normal"
+                required
+              />
+              <TextField
+                fullWidth
+                label="New Password"
+                name="newPassword"
+                type="password"
+                value={passwordData.newPassword}
+                onChange={handlePasswordChange}
+                margin="normal"
+                required
+              />
+              <TextField
+                fullWidth
+                label="Confirm New Password"
+                name="confirmPassword"
+                type="password"
+                value={passwordData.confirmPassword}
+                onChange={handlePasswordChange}
+                margin="normal"
+                required
+              />
+            </Box>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setPasswordDialog(false)}>Cancel</Button>
+            <Button onClick={handlePasswordSubmit} variant="contained">
+              Change Password
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+        <Button
+          variant="outlined"
+          onClick={() => setPasswordDialog(true)}
+          sx={{ mt: 2 }}
+        >
+          Change Password
+        </Button>
+      </Box>
     </Container>
   );
 };

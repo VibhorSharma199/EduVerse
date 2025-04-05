@@ -1,74 +1,77 @@
 import React, { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
 import {
   Container,
-  Box,
   Typography,
+  Box,
   Grid,
   Card,
   CardContent,
-  CardMedia,
+  CardActions,
   Button,
+  Tabs,
+  Tab,
+  Divider,
+  List,
+  ListItem,
+  ListItemText,
+  ListItemAvatar,
+  Avatar,
   Chip,
   CircularProgress,
   Alert,
 } from "@mui/material";
-import api from "../services/api";
+import {
+  School as SchoolIcon,
+  People as PeopleIcon,
+  Assignment as AssignmentIcon,
+  CheckCircle as CheckCircleIcon,
+} from "@mui/icons-material";
+import { useNavigate } from "react-router-dom";
+import courseService from "../services/courseService";
 
 const MentorDashboard = () => {
+  const navigate = useNavigate();
+  const [activeTab, setActiveTab] = useState(0);
   const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchMentorData = async () => {
       try {
         setLoading(true);
+        const response = await courseService.getMentorCourses();
+        setCourses(response.data);
         setError(null);
-
-        const coursesResponse = await api.get("/courses/mentor");
-        console.log("Courses response:", coursesResponse.data);
-
-        if (coursesResponse.data.status === "success") {
-          setCourses(coursesResponse.data.data || []);
-        } else {
-          setCourses([]);
-        }
-      } catch (error) {
-        console.error("Error fetching data:", error);
-        if (error.response) {
-          console.error("Error response:", error.response.data);
-          console.error("Error status:", error.response.status);
-          setError(
-            error.response.data.message ||
-              "Failed to load courses. Please try again later."
-          );
-        } else if (error.request) {
-          setError(
-            "No response received from server. Please check your connection."
-          );
-        } else {
-          setError("An error occurred while setting up the request.");
-        }
+      } catch (err) {
+        console.error("Error fetching mentor data:", err);
+        setError("Failed to load mentor data. Please try again later.");
       } finally {
         setLoading(false);
       }
     };
 
-    fetchData();
+    fetchMentorData();
   }, []);
 
-  const getStatusColor = (status) => {
-    switch (status) {
-      case "published":
-        return "success";
-      case "draft":
-        return "warning";
-      case "archived":
-        return "default";
-      default:
-        return "primary";
-    }
+  const handleTabChange = (event, newValue) => {
+    setActiveTab(newValue);
+  };
+
+  const handleCreateCourse = () => {
+    navigate("/create-course");
+  };
+
+  const handleViewCourse = (courseId) => {
+    navigate(`/courses/${courseId}`);
+  };
+
+  const handleEditCourse = (courseId) => {
+    navigate(`/mentor/courses/${courseId}/edit`);
+  };
+
+  const handleManageModules = (courseId) => {
+    navigate(`/mentor/courses/${courseId}/modules`);
   };
 
   if (loading) {
@@ -76,9 +79,9 @@ const MentorDashboard = () => {
       <Box
         sx={{
           display: "flex",
-          alignItems: "center",
           justifyContent: "center",
-          minHeight: "100vh",
+          alignItems: "center",
+          minHeight: "80vh",
         }}
       >
         <CircularProgress />
@@ -88,159 +91,214 @@ const MentorDashboard = () => {
 
   if (error) {
     return (
-      <Container>
-        <Alert severity="error" sx={{ mt: 2 }}>
-          {error}
-        </Alert>
+      <Container maxWidth="lg" sx={{ mt: 4 }}>
+        <Alert severity="error">{error}</Alert>
       </Container>
     );
   }
 
   return (
-    <Container>
-      <Box sx={{ py: 4 }}>
-        <Box
-          sx={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            mb: 4,
-          }}
+    <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
+      <Box sx={{ display: "flex", justifyContent: "space-between", mb: 4 }}>
+        <Typography variant="h4" component="h1" gutterBottom>
+          Mentor Dashboard
+        </Typography>
+        <Button
+          variant="contained"
+          color="primary"
+          startIcon={<SchoolIcon />}
+          onClick={handleCreateCourse}
         >
-          <Typography variant="h4" component="h1">
-            My Courses
-          </Typography>
-          <Button
-            component={Link}
-            to="/mentor/courses/new"
-            variant="contained"
-            color="primary"
-          >
-            Create New Course
-          </Button>
-        </Box>
+          Create New Course
+        </Button>
+      </Box>
 
-        {courses.length === 0 ? (
-          <Box sx={{ textAlign: "center", py: 4 }}>
-            <Typography variant="h6" color="textSecondary">
-              You haven't created any courses yet.
-            </Typography>
-            <Button
-              component={Link}
-              to="/mentor/courses/new"
-              variant="contained"
-              color="primary"
-              sx={{ mt: 2 }}
-            >
-              Create Your First Course
-            </Button>
-          </Box>
-        ) : (
-          <Grid container spacing={3}>
-            {courses.map((course) => (
-              <Grid item xs={12} md={6} lg={4} key={course._id}>
-                <Card>
-                  <CardMedia
-                    component="img"
-                    height="200"
-                    image={course.thumbnail}
-                    alt={course.title}
+      <Box sx={{ borderBottom: 1, borderColor: "divider", mb: 3 }}>
+        <Tabs value={activeTab} onChange={handleTabChange}>
+          <Tab label="Overview" />
+          <Tab label="My Courses" />
+          <Tab label="Students" />
+        </Tabs>
+      </Box>
+
+      {activeTab === 0 && (
+        <Grid container spacing={3}>
+          <Grid item xs={12} md={4}>
+            <Card>
+              <CardContent>
+                <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
+                  <SchoolIcon
+                    sx={{ fontSize: 40, color: "primary.main", mr: 2 }}
                   />
+                  <Typography variant="h5">Courses</Typography>
+                </Box>
+                <Typography variant="h3">{courses.length}</Typography>
+                <Typography color="text.secondary">Active Courses</Typography>
+              </CardContent>
+            </Card>
+          </Grid>
+          <Grid item xs={12} md={4}>
+            <Card>
+              <CardContent>
+                <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
+                  <PeopleIcon
+                    sx={{ fontSize: 40, color: "secondary.main", mr: 2 }}
+                  />
+                  <Typography variant="h5">Students</Typography>
+                </Box>
+                <Typography variant="h3">
+                  {courses.reduce(
+                    (total, course) =>
+                      total + (course.enrolledStudents?.length || 0),
+                    0
+                  )}
+                </Typography>
+                <Typography color="text.secondary">
+                  Total Enrolled Students
+                </Typography>
+              </CardContent>
+            </Card>
+          </Grid>
+          <Grid item xs={12} md={4}>
+            <Card>
+              <CardContent>
+                <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
+                  <AssignmentIcon
+                    sx={{ fontSize: 40, color: "success.main", mr: 2 }}
+                  />
+                  <Typography variant="h5">Completion Rate</Typography>
+                </Box>
+                <Typography variant="h3">78%</Typography>
+                <Typography color="text.secondary">
+                  Average Course Completion
+                </Typography>
+              </CardContent>
+            </Card>
+          </Grid>
+        </Grid>
+      )}
+
+      {activeTab === 1 && (
+        <Grid container spacing={3}>
+          {courses.length === 0 ? (
+            <Grid item xs={12}>
+              <Card>
+                <CardContent>
+                  <Typography
+                    variant="h6"
+                    align="center"
+                    color="text.secondary"
+                  >
+                    You haven't created any courses yet.
+                  </Typography>
+                  <Box
+                    sx={{ display: "flex", justifyContent: "center", mt: 2 }}
+                  >
+                    <Button
+                      variant="contained"
+                      color="primary"
+                      startIcon={<SchoolIcon />}
+                      onClick={handleCreateCourse}
+                    >
+                      Create Your First Course
+                    </Button>
+                  </Box>
+                </CardContent>
+              </Card>
+            </Grid>
+          ) : (
+            courses.map((course) => (
+              <Grid item xs={12} md={6} key={course._id}>
+                <Card>
                   <CardContent>
-                    <Box sx={{ mb: 2 }}>
-                      <Typography variant="h6" gutterBottom>
-                        {course.title}
-                      </Typography>
-                      <Box sx={{ display: "flex", gap: 1, mb: 1 }}>
-                        <Chip
-                          label={course.level}
-                          size="small"
-                          color="primary"
-                          variant="outlined"
-                        />
-                        <Chip
-                          label={course.status}
-                          size="small"
-                          color={getStatusColor(course.status)}
-                        />
-                      </Box>
-                    </Box>
-
-                    <Typography
-                      variant="body2"
-                      color="textSecondary"
-                      sx={{
-                        mb: 2,
-                        display: "-webkit-box",
-                        WebkitLineClamp: 2,
-                        WebkitBoxOrient: "vertical",
-                        overflow: "hidden",
-                      }}
-                    >
-                      {course.description}
+                    <Typography variant="h6" gutterBottom>
+                      {course.title}
                     </Typography>
-
-                    <Box
-                      sx={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        alignItems: "center",
-                        mb: 2,
-                      }}
-                    >
-                      <Box sx={{ display: "flex", gap: 2 }}>
-                        <Typography variant="body2" color="textSecondary">
-                          {course.enrolledStudents?.length || 0} students
-                        </Typography>
-                        <Typography variant="body2" color="textSecondary">
-                          ⭐ {course.rating?.toFixed(1) || "0.0"}
-                        </Typography>
-                      </Box>
-                      <Box>
-                        {course.discount > 0 && (
-                          <Typography
-                            variant="body2"
-                            color="textSecondary"
-                            sx={{ textDecoration: "line-through" }}
-                          >
-                            ${course.price}
-                          </Typography>
-                        )}
-                        <Typography variant="body1" color="primary">
-                          $
-                          {(
-                            course.price *
-                            (1 - (course.discount || 0) / 100)
-                          ).toFixed(2)}
-                        </Typography>
-                      </Box>
-                    </Box>
-
-                    <Box sx={{ display: "flex", gap: 2 }}>
-                      <Button
-                        component={Link}
-                        to={`/mentor/courses/${course._id}/edit`}
-                        variant="outlined"
-                        fullWidth
-                      >
-                        Edit Course
-                      </Button>
-                      <Button
-                        component={Link}
-                        to={`/mentor/courses/${course._id}/modules`}
-                        variant="contained"
-                        fullWidth
-                      >
-                        Manage Modules
-                      </Button>
+                    <Typography color="text.secondary" gutterBottom>
+                      {course.description.substring(0, 100)}
+                      {course.description.length > 100 ? "..." : ""}
+                    </Typography>
+                    <Box sx={{ display: "flex", alignItems: "center", mt: 2 }}>
+                      <Chip
+                        icon={<PeopleIcon />}
+                        label={`${course.enrolledStudents?.length || 0} Students`}
+                        size="small"
+                        sx={{ mr: 1 }}
+                      />
+                      <Chip
+                        icon={<AssignmentIcon />}
+                        label={`${course.modules?.length || 0} Modules`}
+                        size="small"
+                      />
                     </Box>
                   </CardContent>
+                  <CardActions>
+                    <Button
+                      size="small"
+                      onClick={() => handleViewCourse(course._id)}
+                    >
+                      View Course
+                    </Button>
+                    <Button
+                      size="small"
+                      onClick={() => handleEditCourse(course._id)}
+                    >
+                      Edit
+                    </Button>
+                    <Button
+                      size="small"
+                      onClick={() => handleManageModules(course._id)}
+                    >
+                      Manage Modules
+                    </Button>
+                  </CardActions>
                 </Card>
               </Grid>
-            ))}
-          </Grid>
-        )}
-      </Box>
+            ))
+          )}
+        </Grid>
+      )}
+
+      {activeTab === 2 && (
+        <Card>
+          <CardContent>
+            <Typography variant="h6" gutterBottom>
+              Recent Student Activity
+            </Typography>
+            <Divider sx={{ mb: 2 }} />
+            {courses.length === 0 ? (
+              <Typography color="text.secondary">
+                No student activity to display. Create a course to start
+                tracking student progress.
+              </Typography>
+            ) : (
+              <List>
+                {courses.flatMap((course) =>
+                  (course.enrolledStudents || []).map((student) => (
+                    <ListItem key={`${course._id}-${student._id}`}>
+                      <ListItemAvatar>
+                        <Avatar src={student.profilePicture}>
+                          {student.name.charAt(0)}
+                        </Avatar>
+                      </ListItemAvatar>
+                      <ListItemText
+                        primary={student.name}
+                        secondary={`Enrolled in ${course.title}`}
+                      />
+                      <Chip
+                        icon={<CheckCircleIcon />}
+                        label="Completed Module 3"
+                        color="success"
+                        size="small"
+                      />
+                    </ListItem>
+                  ))
+                )}
+              </List>
+            )}
+          </CardContent>
+        </Card>
+      )}
     </Container>
   );
 };

@@ -1,275 +1,293 @@
-import React, { useState, useEffect, useCallback } from "react";
-import { Link } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import {
+  Container,
+  Grid,
+  Paper,
+  Typography,
+  Box,
+  CircularProgress,
+  Card,
+  CardContent,
+  CardMedia,
+  Button,
+  LinearProgress,
+  Chip,
+  Avatar,
+  useTheme,
+  alpha,
+} from "@mui/material";
+import {
+  School,
+  TrendingUp,
+  EmojiEvents,
+  Star,
+  PlayCircle,
+  CheckCircle,
+  Timeline,
+} from "@mui/icons-material";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import dashboardService from "../services/dashboardService";
 
-const Dashboard = () => {
-  const { user } = useAuth();
-  const [dashboardData, setDashboardData] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+const StatCard = ({ title, value, icon, color, subtitle }) => {
+  const theme = useTheme();
+  return (
+    <Card
+      sx={{
+        height: "100%",
+        background: `linear-gradient(135deg, ${alpha(
+          theme.palette.primary.main,
+          0.1
+        )} 0%, ${alpha(theme.palette.primary.main, 0.05)} 100%)`,
+        borderRadius: 2,
+        transition: "transform 0.2s",
+        "&:hover": {
+          transform: "translateY(-4px)",
+        },
+      }}
+    >
+      <CardContent>
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            mb: 2,
+          }}
+        >
+          <Box
+            sx={{
+              p: 1.5,
+              borderRadius: 2,
+              bgcolor: alpha(color, 0.1),
+              color: color,
+            }}
+          >
+            {icon}
+          </Box>
+          <Typography variant="h4" component="div" fontWeight="bold">
+            {value}
+          </Typography>
+        </Box>
+        <Typography variant="h6" color="text.secondary" gutterBottom>
+          {title}
+        </Typography>
+        {subtitle && (
+          <Typography variant="body2" color="text.secondary">
+            {subtitle}
+          </Typography>
+        )}
+      </CardContent>
+    </Card>
+  );
+};
 
-  const fetchDashboardData = useCallback(async () => {
-    try {
-      setLoading(true);
-      setError("");
-      const response = await dashboardService.getDashboardData();
-      setDashboardData(response.data);
-    } catch (err) {
-      console.error("Error fetching dashboard data:", err);
-      setError(err.response?.data?.message || "Failed to load dashboard data");
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+const CourseCard = ({ course }) => {
+  const navigate = useNavigate();
+  const theme = useTheme();
+  const progress = (course.progress || 0) * 100;
+
+  return (
+    <Card
+      sx={{
+        height: "100%",
+        display: "flex",
+        flexDirection: "column",
+        transition: "transform 0.2s",
+        "&:hover": {
+          transform: "translateY(-4px)",
+        },
+      }}
+    >
+      <CardMedia
+        component="img"
+        height="140"
+        image={
+          course.thumbnail ||
+          "https://source.unsplash.com/random/400x200?education"
+        }
+        alt={course.title}
+      />
+      <CardContent sx={{ flexGrow: 1 }}>
+        <Typography variant="h6" gutterBottom>
+          {course.title}
+        </Typography>
+        <Typography variant="body2" color="text.secondary" gutterBottom>
+          {course.description}
+        </Typography>
+        <Box sx={{ mt: 2 }}>
+          <Typography variant="body2" color="text.secondary" gutterBottom>
+            Progress
+          </Typography>
+          <LinearProgress
+            variant="determinate"
+            value={progress}
+            sx={{
+              height: 8,
+              borderRadius: 4,
+              bgcolor: alpha(theme.palette.primary.main, 0.1),
+              "& .MuiLinearProgress-bar": {
+                borderRadius: 4,
+              },
+            }}
+          />
+          <Typography
+            variant="body2"
+            color="text.secondary"
+            sx={{ mt: 1, textAlign: "right" }}
+          >
+            {Math.round(progress)}%
+          </Typography>
+        </Box>
+        <Box sx={{ mt: 2, display: "flex", gap: 1 }}>
+          <Chip
+            size="small"
+            icon={<School />}
+            label={course.category}
+            variant="outlined"
+          />
+          <Chip
+            size="small"
+            icon={<PlayCircle />}
+            label={`${course.totalModules} modules`}
+            variant="outlined"
+          />
+        </Box>
+      </CardContent>
+      <Box sx={{ p: 2, pt: 0 }}>
+        <Button
+          fullWidth
+          variant="contained"
+          onClick={() => navigate(`/courses/${course._id}`)}
+        >
+          Continue Learning
+        </Button>
+      </Box>
+    </Card>
+  );
+};
+
+const Dashboard = () => {
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [dashboardData, setDashboardData] = useState(null);
+  const { user } = useAuth();
+  const theme = useTheme();
 
   useEffect(() => {
+    const fetchDashboardData = async () => {
+      try {
+        const data = await dashboardService.getDashboardData();
+        setDashboardData(data);
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
     fetchDashboardData();
-  }, [fetchDashboardData]);
+  }, []);
 
   if (loading) {
     return (
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto"></div>
-        </div>
-      </div>
+      <Box
+        display="flex"
+        justifyContent="center"
+        alignItems="center"
+        minHeight="80vh"
+      >
+        <CircularProgress />
+      </Box>
     );
   }
 
   if (error) {
     return (
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div
-          className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded relative"
-          role="alert"
-        >
-          <span className="block sm:inline">{error}</span>
-        </div>
-      </div>
+      <Container>
+        <Typography color="error" variant="h6">
+          {error}
+        </Typography>
+      </Container>
     );
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      {/* Welcome Section */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">
-          Welcome back, {user.name}!
-        </h1>
-        <p className="mt-2 text-gray-600">Continue your learning journey</p>
-      </div>
+    <Container maxWidth="lg" sx={{ py: 4 }}>
+      <Box sx={{ mb: 4 }}>
+        <Typography variant="h4" component="h1" gutterBottom fontWeight="bold">
+          Welcome back, {user?.name}!
+        </Typography>
+        <Typography variant="subtitle1" color="text.secondary">
+          Track your learning progress and discover new courses
+        </Typography>
+      </Box>
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
-        <div className="bg-white overflow-hidden shadow rounded-lg">
-          <div className="p-5">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <svg
-                  className="h-6 w-6 text-gray-400"
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
-                  />
-                </svg>
-              </div>
-              <div className="ml-5 w-0 flex-1">
-                <dl>
-                  <dt className="text-sm font-medium text-gray-500 truncate">
-                    Enrolled Courses
-                  </dt>
-                  <dd className="text-lg font-medium text-gray-900">
-                    {dashboardData?.user?.enrolledCourses?.length || 0}
-                  </dd>
-                </dl>
-              </div>
-            </div>
-          </div>
-        </div>
+      <Grid container spacing={3} sx={{ mb: 4 }}>
+        <Grid item xs={12} sm={6} md={3}>
+          <StatCard
+            title="Enrolled Courses"
+            value={dashboardData?.enrolledCourses?.length || 0}
+            icon={<School sx={{ fontSize: 32 }} />}
+            color={theme.palette.primary.main}
+            subtitle="Active courses"
+          />
+        </Grid>
+        <Grid item xs={12} sm={6} md={3}>
+          <StatCard
+            title="Completed Courses"
+            value={dashboardData?.completedCourses?.length || 0}
+            icon={<CheckCircle sx={{ fontSize: 32 }} />}
+            color={theme.palette.success.main}
+            subtitle="Courses finished"
+          />
+        </Grid>
+        <Grid item xs={12} sm={6} md={3}>
+          <StatCard
+            title="Badges Earned"
+            value={user?.badges?.length || 0}
+            icon={<EmojiEvents sx={{ fontSize: 32 }} />}
+            color={theme.palette.warning.main}
+            subtitle="Achievements unlocked"
+          />
+        </Grid>
+        <Grid item xs={12} sm={6} md={3}>
+          <StatCard
+            title="Learning Streak"
+            value={`${dashboardData?.learningStreak || 0} days`}
+            icon={<Timeline sx={{ fontSize: 32 }} />}
+            color={theme.palette.info.main}
+            subtitle="Keep it up!"
+          />
+        </Grid>
+      </Grid>
 
-        <div className="bg-white overflow-hidden shadow rounded-lg">
-          <div className="p-5">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <svg
-                  className="h-6 w-6 text-gray-400"
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-                  />
-                </svg>
-              </div>
-              <div className="ml-5 w-0 flex-1">
-                <dl>
-                  <dt className="text-sm font-medium text-gray-500 truncate">
-                    Completed Courses
-                  </dt>
-                  <dd className="text-lg font-medium text-gray-900">
-                    {dashboardData?.user?.completedCourses?.length || 0}
-                  </dd>
-                </dl>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white overflow-hidden shadow rounded-lg">
-          <div className="p-5">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <svg
-                  className="h-6 w-6 text-gray-400"
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                  />
-                </svg>
-              </div>
-              <div className="ml-5 w-0 flex-1">
-                <dl>
-                  <dt className="text-sm font-medium text-gray-500 truncate">
-                    Hours Learned
-                  </dt>
-                  <dd className="text-lg font-medium text-gray-900">
-                    {dashboardData?.user?.totalHoursLearned || 0}
-                  </dd>
-                </dl>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white overflow-hidden shadow rounded-lg">
-          <div className="p-5">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <svg
-                  className="h-6 w-6 text-gray-400"
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"
-                  />
-                </svg>
-              </div>
-              <div className="ml-5 w-0 flex-1">
-                <dl>
-                  <dt className="text-sm font-medium text-gray-500 truncate">
-                    Achievements
-                  </dt>
-                  <dd className="text-lg font-medium text-gray-900">
-                    {dashboardData?.user?.achievements?.length || 0}
-                  </dd>
-                </dl>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Recent Activity */}
-      <div className="mt-8">
-        <h2 className="text-2xl font-bold text-gray-900">Recent Activity</h2>
-        <div className="mt-4 space-y-4">
-          {dashboardData?.recentActivity?.map((activity, index) => (
-            <div
-              key={index}
-              className="bg-white shadow rounded-lg p-4 flex items-center"
-            >
-              <div className="flex-shrink-0">
-                <svg
-                  className="h-6 w-6 text-gray-400"
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                  />
-                </svg>
-              </div>
-              <div className="ml-4">
-                <p className="text-sm text-gray-900">{activity.description}</p>
-                <p className="text-sm text-gray-500">
-                  {new Date(activity.timestamp).toLocaleDateString()}
-                </p>
-              </div>
-            </div>
+      <Box sx={{ mb: 4 }}>
+        <Typography variant="h5" gutterBottom fontWeight="bold">
+          Continue Learning
+        </Typography>
+        <Grid container spacing={3}>
+          {dashboardData?.enrolledCourses?.map((course) => (
+            <Grid item key={course._id} xs={12} sm={6} md={4}>
+              <CourseCard course={course} />
+            </Grid>
           ))}
-        </div>
-      </div>
+        </Grid>
+      </Box>
 
-      {/* Recommended Courses */}
-      <div className="mt-8">
-        <h2 className="text-2xl font-bold text-gray-900">
+      <Box>
+        <Typography variant="h5" gutterBottom fontWeight="bold">
           Recommended Courses
-        </h2>
-        <div className="mt-4 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        </Typography>
+        <Grid container spacing={3}>
           {dashboardData?.recommendedCourses?.map((course) => (
-            <div
-              key={course.id}
-              className="bg-white overflow-hidden shadow rounded-lg"
-            >
-              <div className="relative pb-48">
-                <img
-                  className="absolute h-full w-full object-cover"
-                  src={course.thumbnail}
-                  alt={course.title}
-                />
-              </div>
-              <div className="p-6">
-                <h3 className="text-lg font-medium text-gray-900">
-                  {course.title}
-                </h3>
-                <p className="mt-2 text-sm text-gray-500">
-                  {course.description}
-                </p>
-                <div className="mt-4">
-                  <Link
-                    to={`/courses/${course.id}`}
-                    className="text-sm font-medium text-indigo-600 hover:text-indigo-500"
-                  >
-                    Learn more →
-                  </Link>
-                </div>
-              </div>
-            </div>
+            <Grid item key={course._id} xs={12} sm={6} md={4}>
+              <CourseCard course={course} />
+            </Grid>
           ))}
-        </div>
-      </div>
-    </div>
+        </Grid>
+      </Box>
+    </Container>
   );
 };
 

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import {
   Container,
   Box,
@@ -31,7 +31,6 @@ import mentorService from "../services/mentorService";
 
 const ModuleManagement = () => {
   const { courseId } = useParams();
-  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [modules, setModules] = useState([]);
@@ -46,7 +45,7 @@ const ModuleManagement = () => {
   const [lectureForm, setLectureForm] = useState({
     title: "",
     description: "",
-    videoUrl: "",
+    youtubeUrl: "",
     duration: 0,
     order: 0,
   });
@@ -94,7 +93,7 @@ const ModuleManagement = () => {
     setLectureForm({
       title: "",
       description: "",
-      videoUrl: "",
+      youtubeUrl: "",
       duration: 0,
       order: module.lectures.length,
     });
@@ -117,7 +116,7 @@ const ModuleManagement = () => {
     setLectureForm({
       title: "",
       description: "",
-      videoUrl: "",
+      youtubeUrl: "",
       duration: 0,
       order: 0,
     });
@@ -304,12 +303,10 @@ const ModuleManagement = () => {
                               <DeleteIcon />
                             </IconButton>
                             <IconButton
-                              edge="end"
-                              onClick={() => {
-                                // Handle lecture preview
-                                window.open(lecture.videoUrl, "_blank");
-                              }}
                               color="primary"
+                              onClick={() =>
+                                window.open(lecture.youtubeUrl, "_blank")
+                              }
                             >
                               <PlayArrowIcon />
                             </IconButton>
@@ -411,9 +408,9 @@ const ModuleManagement = () => {
                 label="Video URL"
                 fullWidth
                 required
-                value={lectureForm.videoUrl}
+                value={lectureForm.youtubeUrl}
                 onChange={(e) =>
-                  setLectureForm({ ...lectureForm, videoUrl: e.target.value })
+                  setLectureForm({ ...lectureForm, youtubeUrl: e.target.value })
                 }
               />
               <TextField

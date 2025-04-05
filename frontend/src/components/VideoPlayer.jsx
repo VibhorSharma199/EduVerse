@@ -2,7 +2,7 @@ import React from "react";
 import { Box, Paper, Typography } from "@mui/material";
 import YouTube from "react-youtube";
 
-const VideoPlayer = ({ videoUrl, title, description }) => {
+const VideoPlayer = ({ youtubeUrl, title, description }) => {
   // Extract video ID from YouTube URL
   const getVideoId = (url) => {
     const regExp =
@@ -11,7 +11,7 @@ const VideoPlayer = ({ videoUrl, title, description }) => {
     return match && match[2].length === 11 ? match[2] : null;
   };
 
-  const videoId = getVideoId(videoUrl);
+  const videoId = getVideoId(youtubeUrl);
 
   if (!videoId) {
     return (

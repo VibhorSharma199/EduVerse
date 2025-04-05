@@ -7,6 +7,7 @@ import leaderboardRoutes from "./routes/leaderboard.routes.js";
 import mentorRoutes from "./routes/mentor.routes.js";
 import userRoutes from "./routes/user.routes.js";
 import gamificationRoutes from "./routes/gamification.js";
+import chatbotRoutes from "./routes/chatbot.routes.js";
 
 // Routes
 app.use("/api/auth", authRoutes);
@@ -17,3 +18,4 @@ app.use("/api/leaderboard", leaderboardRoutes);
 app.use("/api/mentors", mentorRoutes);
 app.use("/api/user", userRoutes);
 app.use("/api/gamification", gamificationRoutes);
+app.use("/api/chatbot", chatbotRoutes);

@@ -1,161 +1,386 @@
-import React , { useState, useEffect }  from 'react';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { 
-  faTachometerAlt,faCircleQuestion, faBook, faUsers, 
-  faCog, faSignOutAlt, faBell, faEnvelope, faPlay, faEllipsisH, 
-  faTrophy,
-  faArrowUpRightDots,
-  faBookOpenReader,
-  faWebAwesome
-} from '@fortawesome/free-solid-svg-icons';
-import { Link } from 'react-router-dom';
-
-const initialMessages = [
-    { sender: 'bot', text: 'Hello! I am your AI study assistant. How can I help you today?' },
-  ];
+import React, { useState, useRef, useEffect } from "react";
+import {
+  Box,
+  Container,
+  Typography,
+  TextField,
+  Button,
+  Paper,
+  Avatar,
+  CircularProgress,
+  IconButton,
+  Divider,
+  Chip,
+  Tooltip,
+  useTheme,
+  useMediaQuery,
+} from "@mui/material";
+import {
+  Send as SendIcon,
+  Delete as DeleteIcon,
+  ContentCopy as CopyIcon,
+  Lightbulb as LightbulbIcon,
+  School as SchoolIcon,
+  Code as CodeIcon,
+  Psychology as PsychologyIcon,
+} from "@mui/icons-material";
+import { useAuth } from "../../contexts/AuthContext";
+import { API_URL } from "../../config";
 
 const ChatBot = () => {
-    const [messages, setMessages] = useState(initialMessages);
-    const [input, setInput] = useState('');
-  
-    const handleSend = () => {
-      if (!input.trim()) return;
-  
-      const newMessage = { sender: 'user', text: input };
-      setMessages((prev) => [...prev, newMessage]);
-      setInput('');
-  
-      setTimeout(() => handleBotReply(input), 500);
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+  const { user } = useAuth();
+  const [messages, setMessages] = useState([]);
+  const [input, setInput] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const messagesEndRef = useRef(null);
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
+
+  const handleSend = async () => {
+    if (!input.trim()) return;
+
+    const userMessage = {
+      id: Date.now(),
+      text: input,
+      sender: "user",
+      timestamp: new Date(),
     };
-  
-    const handleBotReply = (userMessage) => {
-      let reply = 'Im not sure I understand. Can you try asking in a different way?';
-  
-      if (userMessage.toLowerCase().includes('course')) {
-        reply = 'I can help you find information about courses. What subject are you interested in?';
-      } else if (userMessage.toLowerCase().includes('math')) {
-        reply = 'For Math, you can explore our tutorials on Calculus, Algebra, and Geometry.';
-      } else if (userMessage.toLowerCase().includes('physics')) {
-        reply = 'Physics topics like Optics, Mechanics, and Thermodynamics are covered in detail.';
+
+    setMessages((prev) => [...prev, userMessage]);
+    setInput("");
+    setLoading(true);
+    setError(null);
+
+    try {
+      const response = await fetch(`${API_URL}/chatbot`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+        body: JSON.stringify({
+          message: input,
+          userId: user?._id,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to get response from chatbot");
       }
-  
-      const botMessage = { sender: 'bot', text: reply };
+
+      const data = await response.json();
+
+      const botMessage = {
+        id: Date.now() + 1,
+        text: data.response,
+        sender: "bot",
+        timestamp: new Date(),
+        suggestions: data.suggestions || [],
+      };
+
       setMessages((prev) => [...prev, botMessage]);
-    };
+    } catch (err) {
+      setError("Failed to get response. Please try again.");
+      console.error("Chatbot error:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleKeyPress = (e) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      handleSend();
+    }
+  };
+
+  const handleClearChat = () => {
+    setMessages([]);
+  };
+
+  const handleCopyMessage = (text) => {
+    navigator.clipboard.writeText(text);
+  };
+
+  const handleSuggestionClick = (suggestion) => {
+    setInput(suggestion);
+  };
+
+  const getSuggestedPrompts = () => {
+    return [
+      {
+        icon: <SchoolIcon />,
+        text: "Explain a concept from my course",
+        prompt: "Can you explain the concept of...",
+      },
+      {
+        icon: <CodeIcon />,
+        text: "Help with coding",
+        prompt: "I need help with this code...",
+      },
+      {
+        icon: <PsychologyIcon />,
+        text: "Learning strategies",
+        prompt: "What are effective strategies for...",
+      },
+      {
+        icon: <LightbulbIcon />,
+        text: "Study tips",
+        prompt: "Give me tips for studying...",
+      },
+    ];
+  };
+
+  const formatTimestamp = (date) => {
+    return new Date(date).toLocaleTimeString([], {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  };
 
   return (
-    <div className="flex min-h-screen right-0 mr-0 bg-gray-100 text-gray-800 font-inter">
-      {/* Sidebar */}
-      <Sidebar />
-      <div className='flex-1 mt-5'>
-      <div className="max-w-lg mx-auto p-4 bg-white shadow-md rounded-lg h-[600px] flex flex-col">
-      <div className="flex-1 overflow-y-auto mb-4">
-        {messages.map((msg, index) => (
-          <div key={index} className={`mb-2 ${msg.sender === 'user' ? 'text-right' : 'text-left'}`}>
-            <div className={`inline-block p-3 rounded-lg ${msg.sender === 'user' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-800'}`}>
-              {msg.text}
-            </div>
-          </div>
-        ))}
-      </div>
-      <div className="flex">
-        <input
-          type="text"
-          className="flex-1 border rounded-lg p-2"
-          placeholder="Type a message..."
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-        />
-        <button onClick={handleSend} className="ml-2 bg-blue-500 text-white p-2 rounded-lg">Send</button>
-      </div>
-    </div>
-      </div>
-    </div>
-  )
-}
+    <Container maxWidth="md" sx={{ py: 4 }}>
+      <Paper
+        elevation={3}
+        sx={{
+          height: isMobile ? "calc(100vh - 120px)" : "80vh",
+          display: "flex",
+          flexDirection: "column",
+          overflow: "hidden",
+          borderRadius: 2,
+        }}
+      >
+        {/* Header */}
+        <Box
+          sx={{
+            p: 2,
+            bgcolor: "primary.main",
+            color: "white",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+          }}
+        >
+          <Box sx={{ display: "flex", alignItems: "center" }}>
+            <Avatar
+              sx={{
+                bgcolor: "secondary.main",
+                mr: 1,
+              }}
+            >
+              <PsychologyIcon />
+            </Avatar>
+            <Typography variant="h6">Learn-F Assistant</Typography>
+          </Box>
+          <Tooltip title="Clear chat">
+            <IconButton color="inherit" onClick={handleClearChat} size="small">
+              <DeleteIcon />
+            </IconButton>
+          </Tooltip>
+        </Box>
 
-const Sidebar = () => {
-  return (
-    <div className="w-64 bg-white p-6">
-      <div className="flex items-center mb-8">
-        <div className="text-purple-600 text-3xl font-bold">C!</div>
-        <div className="ml-2 text-xl font-semibold">COURSE</div>
-      </div>
-      
-      <div className="mb-8">
-        <input 
-          className="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-200" 
-          placeholder="Search your course here..." 
-          type="text" 
-        />
-      </div>
-      
-      <div className="mb-8">
-        <h2 className="text-lg font-semibold mb-4">OVERVIEW</h2>
-        <ul>
-          <Link to="/"><SidebarItem icon={faTachometerAlt} text="Dashboard"active /></Link>
-          <Link to="/quests"><SidebarItem icon={faCircleQuestion} text="Learning Quests" /></Link>
-          <Link to="/quizes"><SidebarItem icon={faBook} text="Quizzes and Challenges" /></Link>
-          <Link to="/badges"><SidebarItem icon={faTrophy} text="Badges And Achievement" /></Link>
-          <Link to="/growth"><SidebarItem icon={faArrowUpRightDots} text="Career Growth Graphs" /></Link>
-          <Link to="/forum"><SidebarItem icon={faUsers} text="Discussion Forums" /></Link>
-          <Link to="/leader"><SidebarItem icon={faBookOpenReader} text="Leader Board" /></Link>
-          <Link to="/chat-bot"><SidebarItem icon={faWebAwesome} text="Chatbot" /></Link>
-        </ul>
-      </div>
-      
-      <div className="mb-8">
-        <h2 className="text-lg font-semibold mb-4">FRIENDS</h2>
-        <ul>
-          <FriendItem 
-            name="Andrew Meter" 
-            role="Software Developer" 
-            imgSrc="https://storage.googleapis.com/a1aa/image/Uvfi4E1H5sZH_zeBWy20ktPIJwvjVPTX2v5UCGSBlmc.jpg" 
-          />
-          <FriendItem 
-            name="Jeff Linkoln" 
-            role="Product Owner" 
-            imgSrc="https://storage.googleapis.com/a1aa/image/vXSsRsaaywWwClXN3DvfIaIp1wPesYN4VD7Ijpoo0fU.jpg" 
-          />
-          <FriendItem 
-            name="Sasha Melstone" 
-            role="HR Manager" 
-            imgSrc="https://storage.googleapis.com/a1aa/image/PpKB9Mt7kmyTFx-bidRpQrbDyi2su1a10HF2DrwqXHs.jpg" 
-          />
-        </ul>
-      </div>
-      
-      <div>
-        <h2 className="text-lg font-semibold mb-4">SETTINGS</h2>
-        <ul>
-          <SidebarItem icon={faCog} text="Settings" />
-          <SidebarItem icon={faSignOutAlt} text="Logout" logout />
-        </ul>
-      </div>
-    </div>
+        {/* Messages */}
+        <Box
+          sx={{
+            flex: 1,
+            overflow: "auto",
+            p: 2,
+            bgcolor: "background.default",
+          }}
+        >
+          {messages.length === 0 ? (
+            <Box
+              sx={{
+                height: "100%",
+                display: "flex",
+                flexDirection: "column",
+                justifyContent: "center",
+                alignItems: "center",
+                color: "text.secondary",
+              }}
+            >
+              <Typography variant="h6" gutterBottom>
+                How can I help you today?
+              </Typography>
+              <Typography variant="body2" align="center" sx={{ mb: 3 }}>
+                Ask me anything about your courses, coding, or learning
+                strategies
+              </Typography>
+              <Box
+                sx={{
+                  display: "flex",
+                  flexWrap: "wrap",
+                  gap: 1,
+                  justifyContent: "center",
+                }}
+              >
+                {getSuggestedPrompts().map((item, index) => (
+                  <Chip
+                    key={index}
+                    icon={item.icon}
+                    label={item.text}
+                    onClick={() => handleSuggestionClick(item.prompt)}
+                    sx={{ m: 0.5 }}
+                  />
+                ))}
+              </Box>
+            </Box>
+          ) : (
+            messages.map((message) => (
+              <Box
+                key={message.id}
+                sx={{
+                  display: "flex",
+                  justifyContent:
+                    message.sender === "user" ? "flex-end" : "flex-start",
+                  mb: 2,
+                }}
+              >
+                <Box
+                  sx={{
+                    maxWidth: "70%",
+                    display: "flex",
+                    flexDirection: "column",
+                  }}
+                >
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "flex-start",
+                      flexDirection:
+                        message.sender === "user" ? "row-reverse" : "row",
+                    }}
+                  >
+                    <Avatar
+                      sx={{
+                        bgcolor:
+                          message.sender === "user"
+                            ? "primary.main"
+                            : "secondary.main",
+                        width: 32,
+                        height: 32,
+                        ml: message.sender === "user" ? 1 : 0,
+                        mr: message.sender === "user" ? 0 : 1,
+                      }}
+                    >
+                      {message.sender === "user" ? user?.name?.[0] || "U" : "A"}
+                    </Avatar>
+                    <Paper
+                      elevation={1}
+                      sx={{
+                        p: 2,
+                        bgcolor:
+                          message.sender === "user"
+                            ? "primary.main"
+                            : "background.paper",
+                        color:
+                          message.sender === "user" ? "white" : "text.primary",
+                        borderRadius: 2,
+                      }}
+                    >
+                      <Typography
+                        variant="body1"
+                        sx={{ whiteSpace: "pre-wrap" }}
+                      >
+                        {message.text}
+                      </Typography>
+                      <Box
+                        sx={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          alignItems: "center",
+                          mt: 1,
+                        }}
+                      >
+                        <Typography variant="caption" color="text.secondary">
+                          {formatTimestamp(message.timestamp)}
+                        </Typography>
+                        <Tooltip title="Copy message">
+                          <IconButton
+                            size="small"
+                            onClick={() => handleCopyMessage(message.text)}
+                            sx={{ ml: 1 }}
+                          >
+                            <CopyIcon fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                      </Box>
+                    </Paper>
+                  </Box>
+                  {message.suggestions && message.suggestions.length > 0 && (
+                    <Box
+                      sx={{ mt: 1, display: "flex", flexWrap: "wrap", gap: 1 }}
+                    >
+                      {message.suggestions.map((suggestion, index) => (
+                        <Chip
+                          key={index}
+                          label={suggestion}
+                          size="small"
+                          onClick={() => handleSuggestionClick(suggestion)}
+                          sx={{ m: 0.5 }}
+                        />
+                      ))}
+                    </Box>
+                  )}
+                </Box>
+              </Box>
+            ))
+          )}
+          <div ref={messagesEndRef} />
+        </Box>
+
+        {/* Input */}
+        <Divider />
+        <Box sx={{ p: 2, bgcolor: "background.paper" }}>
+          <Box sx={{ display: "flex", gap: 1 }}>
+            <TextField
+              fullWidth
+              multiline
+              maxRows={4}
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyPress={handleKeyPress}
+              placeholder="Type your message..."
+              variant="outlined"
+              size="small"
+              disabled={loading}
+              sx={{
+                "& .MuiOutlinedInput-root": {
+                  borderRadius: 2,
+                },
+              }}
+            />
+            <Button
+              variant="contained"
+              color="primary"
+              onClick={handleSend}
+              disabled={loading || !input.trim()}
+              sx={{
+                borderRadius: 2,
+                minWidth: 100,
+              }}
+            >
+              {loading ? <CircularProgress size={24} /> : <SendIcon />}
+            </Button>
+          </Box>
+          {error && (
+            <Typography color="error" variant="caption" sx={{ mt: 1 }}>
+              {error}
+            </Typography>
+          )}
+        </Box>
+      </Paper>
+    </Container>
   );
 };
 
-const SidebarItem = ({ icon, text, active = false, logout = false }) => {
-  return (
-    <li className={`mb-4 flex items-center ${active ? 'text-purple-600' : ''} ${logout ? 'text-red-600' : ''}`}>
-      <FontAwesomeIcon icon={icon} className="mr-2 w-4" />
-      {text}
-    </li>
-  );
-};
-
-const FriendItem = ({ name, role, imgSrc }) => {
-  return (
-    <li className="mb-4 flex items-center">
-      <img alt={name} className="w-8 h-8 rounded-full mr-2" src={imgSrc} />
-      <div>
-        <div>{name}</div>
-        <div className="text-sm text-gray-500">{role}</div>
-      </div>
-    </li>
-  );
-};
-
-export default ChatBot
+export default ChatBot;
